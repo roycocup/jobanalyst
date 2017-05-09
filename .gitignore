@@ -4,5 +4,8 @@ log.txt
 /credentials-rodderscode.json
 .idea
 .idea/*
+vendor
+vendor/*
+
 
 
