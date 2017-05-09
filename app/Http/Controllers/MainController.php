@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MessagePart;
 use Illuminate\Http\Request;
 use Google_Service_Gmail;
 use Google_Client;
@@ -25,7 +26,6 @@ class MainController extends Controller
 
 
     protected function init(){
-        ob_start();
         if(file_exists($this->logFile))
             unlink($this->logFile);
     }
@@ -42,7 +42,7 @@ class MainController extends Controller
         try{
             $results = $service->users_labels->listUsersLabels($user);
         }catch(\Exception $e){
-            var_dump($e->getMessage());
+            var_dump($e->getMessage()); die;
         }
 
 
@@ -56,10 +56,25 @@ class MainController extends Controller
             Messages::saveMessage($message);
         }
 
+        $max = 10;
         $i = 0;
         foreach ($messages as $message){
 
-            $headers = $service->users_messages->get($user, $message->getId())->getPayload()->getHeaders();
+            if ($i >= $max) break;
+
+            $message = $service->users_messages->get($user, $message->getId());
+            $payload = $message->getPayload();
+            $headers = $payload->getHeaders();
+            $parts = $payload->getParts();
+            $body = $parts[0]['body'];
+            $rawData = $body->data;
+            $sanitizedData = strtr($rawData,'-_', '+/');
+            $decodedMessage = base64_decode($sanitizedData);
+
+            var_dump($body); die;
+
+            // http://stackoverflow.com/questions/32655874/cannot-get-the-body-of-email-with-gmail-php-api
+            $this->printout($payload->parts[0]->parts); die;
 
             $msg = [];
 
@@ -67,14 +82,20 @@ class MainController extends Controller
                 if ('X-Received' == $header['name']){
                     $val = $header['value'];
                     $val = explode(';',$val);
-                    $msg[] = $val[count($val)-1];
+                    $msg['received'] = $val[count($val)-1];
                 }
                 if ($header['name'] == 'Subject'){
-                    $msg[] = $header['value'];
+                    $msg['subject'] = $header['value'];
                 }
             }
 
-            $this->write(implode(' ', $msg));
+            $mp = new MessagePart();
+            $mp->received = ($msg['received'])?:'';
+            $mp->subject = ($msg['subject'])?:'';
+            $mp->g_id = $message->getId();
+            $mp->message = $decodedMessage;
+            $mp->save();
+
             $i++;
         }
     }
@@ -128,8 +149,8 @@ class MainController extends Controller
     }
 
     protected function printout($msg){
-        echo ($msg."\n\r");
-        ob_flush();
+        echo "<pre>";
+        print_r($msg); die;
     }
 
     protected function write($msg){
