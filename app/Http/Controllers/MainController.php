@@ -48,7 +48,7 @@ class MainController extends Controller
 
         $this->init();
         //$results = $service->users_messages->listUsersMessages($user, ['labelIds'=>'Label_31']);
-        $results = $service->users_messages->listUsersMessages($user, ['labelIds' => 'INBOX']);
+        $results = $service->users_messages->listUsersMessages($user, ['labelIds' => 'INBOX', 'q' =>'Subject:developer']);
         // $nextPageToken = $service->users_messages->listUsersMessages($user)->getNextPageToken();
         $messages = $results->getMessages();
 
@@ -56,20 +56,9 @@ class MainController extends Controller
             Messages::saveMessage($message);
         }
 
-        $this->write($messages); die;
-
-        $maxMess = 10;
         $i = 0;
         foreach ($messages as $message){
 
-            $this->printout('Processing message '. $i);
-
-
-            if ($i >= $maxMess){
-                break;
-            }
-
-            $this->printout('Pulling headers...');
             $headers = $service->users_messages->get($user, $message->getId())->getPayload()->getHeaders();
 
             $msg = [];
