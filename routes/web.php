@@ -11,8 +11,8 @@
 |
 */
 
-$app->get('/', function () use ($app) {
-    return $app->version();
-});
+//$app->get('/', function () use ($app) {
+//    return $app->version();
+//});
 
-$app->get('home', ['uses'=>'MainController@home']);
+$app->get('/', ['uses'=>'MainController@home']);
