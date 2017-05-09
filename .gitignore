@@ -2,10 +2,8 @@ log.txt
 /client_secret.json
 /credentials.json
 /credentials-rodderscode.json
-.idea
-.idea/*
-vendor
-vendor/*
-
-
-
+/vendor
+/.idea
+Homestead.json
+Homestead.yaml
+/.env
